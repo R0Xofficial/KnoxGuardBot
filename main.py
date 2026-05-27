@@ -113,6 +113,48 @@ async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 # --- COMMANDS ---
 
+@bot_command("help")
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Wyświetla listę dostępnych komend."""
+    user_id = update.effective_user.id
+    is_sudo = db.is_sudo(user_id)
+    is_owner = (user_id == OWNER_ID)
+
+    # --- Sekcja dla każdego ---
+    help_text = (
+        "<b>Global Ban Bot Help</b>\n\n"
+        "<b>User Commands:</b>\n"
+        "• <code>/ping</code> - Check bot latency.\n"
+        "• <code>/uptime</code> - See how long bot is running.\n"
+        "• <code>/gbanstat</code> - Check your own ban status.\n\n"
+    )
+
+    # --- Sekcja dla Sudo ---
+    if is_sudo:
+        help_text += (
+            "<b>Sudo Commands:</b>\n"
+            "• <code>/gban &lt;ID/reply&gt; &lt;reason&gt;</code> - Issue a global ban.\n"
+            "• <code>/ungban &lt;ID/reply&gt;</code> - Revoke a global ban.\n"
+            "• <code>/gbanstat &lt;ID/reply&gt;</code> - Check user's detailed ban info.\n"
+            "• <code>/stats</code> - View database statistics.\n"
+            "• <code>/sudolist</code> - Show all bot administrators.\n"
+            "• <code>/enforcegban &lt;on/off&gt;</code> - Toggle protection on current chat.\n\n"
+        )
+
+    # --- Sekcja dla Właściciela ---
+    if is_owner:
+        help_text += (
+            "<b>Master Owner Commands:</b>\n"
+            "• <code>/addsudo &lt;ID/reply&gt;</code> - Grant sudo privileges.\n"
+            "• <code>/delsudo &lt;ID/reply&gt;</code> - Revoke sudo privileges.\n"
+            "• <code>/cleanup</code> - Remove inactive chats from database.\n"
+            "• <code>/backup</code> - Get the latest database file.\n\n"
+        )
+
+    help_text += "<i>You can use '/' or '!' as a prefix for all commands.</i>"
+
+    await update.message.reply_html(help_text)
+
 @bot_command("ping")
 async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_time = time.time()
