@@ -78,3 +78,8 @@ def get_all_sudos():
     with sqlite3.connect(DB_NAME) as conn:
         res = conn.execute("SELECT user_id FROM sudo_users").fetchall()
         return [row[0] for row in res]
+
+def log_chat(chat_id):
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.execute("INSERT OR IGNORE INTO bot_chats (chat_id, enforce_gban) VALUES (?, ?)", (chat_id, 1))
+        conn.commit()
