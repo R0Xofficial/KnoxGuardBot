@@ -127,7 +127,7 @@ async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     u_link = await utils.create_user_link(target_id, context)
     title = "Your Global Ban Status" if target_id == user.id else "Global Ban Status"
     if ban:
-        msg = (f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n\n"
+        msg = (f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n"
                f"<b>Status:</b> Banned\n"
                f"<b>Reason:</b> <code>{utils.safe_escape(ban[0])}</code>\n<b>Date:</b> <code>{ban[2]}</code>\n")
         if sudo:
