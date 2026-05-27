@@ -578,6 +578,18 @@ async def update_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text(f"<b>Update failed!</b>\nError: <code>{str(e)}</code>", parse_mode=ParseMode.HTML)
     except Exception as e:
         await msg.edit_text(f"<b>Unexpected error:</b>\n<code>{str(e)}</code>", parse_mode=ParseMode.HTML)
+
+@bot_command("restart")
+async def restart_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        return
+    try:
+        await update.message.reply_html("<b>Restarting...</b>")
+        if LOG_CHAT_ID:
+            await context.bot.send_message(LOG_CHAT_ID, "Rebooting system...")
+    except Exception as e:
+        logger.error(f"Failed to send restart message: {e}")
+    os.execv(sys.executable, [sys.executable] + sys.argv)
     
 # --- main.py ---
 
