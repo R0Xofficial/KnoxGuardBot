@@ -448,7 +448,7 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     status_msg = await update.message.reply_text("Starting database cleanup... Please wait.")
     
-    with sqlite3.connect(DB_NAME) as conn:
+    with sqlite3.connect(db.DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
 
     total = len(chats)
@@ -473,10 +473,6 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"• Active: <code>{total - removed}</code>",
         parse_mode=ParseMode.HTML
     )
-
-import traceback
-import io
-from datetime import datetime
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Exception while handling an update:", exc_info=context.error)
