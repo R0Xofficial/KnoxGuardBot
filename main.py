@@ -565,7 +565,7 @@ async def update_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.edit_text("<b>Bot is already up to date.</b>\nNo restart needed.", parse_mode=ParseMode.HTML)
             return
 
-        successful_msg = (f"<b>Update successful:</b>\n<i>Restarting now...</i>\n\n Log:\n<blockquote>{pull_result}</blockquote>")
+        successful_msg = (f"<b>Update successful:</b>\n<i>Restarting now...</i>\n\n<blockquote><code>{pull_result}</code></blockquote>")
 
         await msg.edit_text(successful_msg, parse_mode=ParseMode.HTML)
 
@@ -608,6 +608,9 @@ def main():
     app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, check_gban_on_exit), group=-10)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, check_gban_on_message), group=-10)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, log_user_handler), group=0)
+
+    if app.job_queue:
+        app.job_queue.run_once(send_startup_log, when=1)
 
     print("Bot is up and running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
