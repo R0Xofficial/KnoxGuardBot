@@ -7,10 +7,8 @@ REGISTERED_CMDS = {}
 def bot_command(name: str | list):
     def decorator(func):
         if isinstance(name, list):
-            for n in name:
-                REGISTERED_CMDS[n.lower()] = func
-        else:
-            REGISTERED_CMDS[name.lower()] = func
+            for n in name: REGISTERED_CMDS[n.lower()] = func
+        else: REGISTERED_CMDS[name.lower()] = func
         return func
     return decorator
 
@@ -29,4 +27,16 @@ async def command_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if cmd_name in REGISTERED_CMDS:
         context.args = parts[1:]
-        await REGISTERED_CMDS[cmd_name](update, context)
+        
+        thread_id = msg.message_thread_id if msg.is_topic_message else None
+        
+        async def custom_reply(text, **kwargs):
+            return await msg.reply_text(text, message_thread_id=thread_id, **kwargs)
+        
+        original_reply = msg.reply_text
+        msg.reply_text = custom_reply
+        
+        try:
+            await REGISTERED_CMDS[cmd_name](update, context)
+        finally:
+            msg.reply_text = original_reply
