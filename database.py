@@ -5,10 +5,28 @@ from config import DB_NAME, OWNER_ID
 
 def init_db():
     with sqlite3.connect(DB_NAME) as conn:
+        # Gban table
         conn.execute('CREATE TABLE IF NOT EXISTS gbans (user_id INTEGER PRIMARY KEY, reason TEXT, admin_id INTEGER, date TEXT)')
+        # Chat settings
         conn.execute('CREATE TABLE IF NOT EXISTS bot_chats (chat_id INTEGER PRIMARY KEY, enforce_gban INTEGER DEFAULT 1)')
+        # Sudo table
         conn.execute('CREATE TABLE IF NOT EXISTS sudo_users (user_id INTEGER PRIMARY KEY)')
+        # User Cache table (IMPORTANT)
+        conn.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, username TEXT, first_name TEXT)')
         conn.commit()
+
+def log_user(user_id, username, first_name):
+    with sqlite3.connect(DB_NAME) as conn:
+        # Zapisuje lub aktualizuje dane użytkownika
+        conn.execute('INSERT OR REPLACE INTO users (user_id, username, first_name) VALUES (?, ?, ?)', 
+                     (user_id, username.lower() if username else None, first_name))
+        conn.commit()
+
+def get_user_by_username(username):
+    username = username.lstrip('@').lower()
+    with sqlite3.connect(DB_NAME) as conn:
+        res = conn.execute("SELECT user_id FROM users WHERE username = ?", (username,)).fetchone()
+        return res[0] if res else None
 
 def is_sudo(user_id):
     if user_id == OWNER_ID: return True
