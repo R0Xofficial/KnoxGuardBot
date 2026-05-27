@@ -24,7 +24,6 @@ async def log_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- PROTECTION LOGIC ---
 
 async def check_gban_on_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Reaguje, gdy zbanowany użytkownik WEJDZIE na grupę."""
     if not update.message or not update.message.new_chat_members:
         return
     
@@ -38,17 +37,20 @@ async def check_gban_on_entry(update: Update, context: ContextTypes.DEFAULT_TYPE
         if ban_info:
             try:
                 await context.bot.ban_chat_member(chat.id, member.id)
+                
+                user_link = await utils.create_user_link(member.id, context)
+                
                 msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
                        f"<i>Enforcing ban in this chat.</i>\n\n"
-                       f"<b>User ID:</b> <code>{member.id}</code>\n"
+                       f"<b>User:</b> {user_link} [<code>{member.id}</code>]\n"
                        f"<b>Reason:</b> {utils.safe_escape(ban_info[0])}\n"
                        f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+                
                 await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
             except Exception as e:
                 logger.error(f"Gban Entry Error: {e}")
 
 async def check_gban_on_exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Reaguje, gdy zbanowany użytkownik WYJDZIE z grupy (banuje go 'zaocznie')."""
     if not update.message or not update.message.left_chat_member:
         return
     
@@ -62,17 +64,20 @@ async def check_gban_on_exit(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if ban_info:
         try:
             await context.bot.ban_chat_member(chat.id, user.id)
+            
+            user_link = await utils.create_user_link(user.id, context)
+            
             msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
                     f"<i>Enforcing ban in this chat.</i>\n\n"
-                    f"<b>User ID:</b> <code>{member.id}</code>\n"
+                    f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
                     f"<b>Reason:</b> {utils.safe_escape(ban_info[0])}\n"
                     f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+            
             await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
         except Exception as e:
             logger.error(f"Gban Exit Error: {e}")
 
 async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Reaguje, gdy zbanowany użytkownik wyśle WIADOMOŚĆ (np. już był na czacie)."""
     chat = update.effective_chat
     if not chat or chat.type == ChatType.PRIVATE: return
     if not db.is_enforced(chat.id): return
@@ -88,11 +93,14 @@ async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TY
                 try: await update.effective_message.delete()
                 except: pass
             
+            user_link = await utils.create_user_link(user.id, context)
+            
             msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
                    f"<i>Enforcing ban in this chat.</i>\n\n"
-                   f"<b>User ID:</b> <code>{user.id}</code>\n"
+                   f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
                    f"<b>Reason:</b> {utils.safe_escape(ban_info[0])}\n"
                    f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+            
             await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
         except Exception as e:
             logger.error(f"Gban Message Error: {e}")
