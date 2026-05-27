@@ -97,6 +97,9 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if not target_id: await update.message.reply_text("User ID not found."); return
 
+    await update.message.reply_html("Let's give him another chance!")
+    await asyncio.sleep(0.5)
+
     if db.remove_gban(target_id):
         user_link = await utils.create_user_link(target_id, context)
         admin_link = await utils.create_user_link(admin.id, context)
