@@ -17,7 +17,6 @@ def init_db():
 
 def log_user(user_id, username, first_name):
     with sqlite3.connect(DB_NAME) as conn:
-        # Zapisuje lub aktualizuje dane użytkownika
         conn.execute('INSERT OR REPLACE INTO users (user_id, username, first_name) VALUES (?, ?, ?)', 
                      (user_id, username.lower() if username else None, first_name))
         conn.commit()
@@ -68,4 +67,9 @@ def is_enforced(chat_id):
 def set_enforce(chat_id, status):
     with sqlite3.connect(DB_NAME) as conn:
         conn.execute("INSERT OR REPLACE INTO bot_chats (chat_id, enforce_gban) VALUES (?, ?)", (chat_id, status))
+        conn.commit()
+
+def remove_chat(chat_id):
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.execute("DELETE FROM bot_chats WHERE chat_id = ?", (chat_id,))
         conn.commit()
