@@ -32,16 +32,9 @@ def is_gban_enforced(chat_id):
         res = conn.execute("SELECT enforce_gban FROM bot_chats WHERE chat_id = ?", (chat_id,)).fetchone()
         return res[0] == 1 if res else False
 
-def get_gban_reason(user_id):
-    with sqlite3.connect(DB_NAME) as conn:
-        res = conn.execute("SELECT reason FROM gbans WHERE user_id = ?", (user_id,)).fetchone()
-        return res[0] if res else None
-
 def get_gban_details(user_id):
-    """Returns (reason, admin_id, date) or None"""
     with sqlite3.connect(DB_NAME) as conn:
-        res = conn.execute("SELECT reason, admin_id, date FROM gbans WHERE user_id = ?", (user_id,)).fetchone()
-        return res
+        return conn.execute("SELECT reason, admin_id, date FROM gbans WHERE user_id = ?", (user_id,)).fetchone()
 
 def add_to_gban(user_id, admin_id, reason):
     with sqlite3.connect(DB_NAME) as conn:
