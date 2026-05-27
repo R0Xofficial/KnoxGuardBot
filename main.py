@@ -3,7 +3,7 @@ import logging
 import asyncio
 from datetime import datetime, timezone
 from telegram import Update
-from telegram.constants import ParseMode, ChatType
+from telegram.constants import ParseMode, ChatType, ChatMemberStatus
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 from config import TOKEN, OWNER_ID, LOG_CHAT_ID, APPEAL_CHAT_USERNAME
