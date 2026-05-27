@@ -12,7 +12,7 @@ from telegram import Update
 from telegram.constants import ParseMode, ChatType, ChatMemberStatus
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, ChatMemberHandler
 
-from config import TOKEN, OWNER_ID, LOG_CHAT_ID, APPEAL_CHAT_USERNAME
+from config import TOKEN, OWNER_ID, LOG_CHAT_ID, APPEAL_CHAT_USERNAME, DB_NAME
 import database as db
 import utils
 from handlers import bot_command, command_router
@@ -448,7 +448,7 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     status_msg = await update.message.reply_text("Starting database cleanup... Please wait.")
     
-    with sqlite3.connect(db.DB_NAME) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
 
     total = len(chats)
