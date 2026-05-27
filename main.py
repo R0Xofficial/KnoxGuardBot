@@ -224,13 +224,9 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     old_ban = db.get_gban(target_id)
     await update.message.reply_html("Ok!")
+    await asyncio.sleep(0.5)
 
     db.add_gban(target_id, admin.id, reason)
-    
-    try: await context.bot.ban_chat_member(chat.id, target_id)
-    except: pass
-
-    await asyncio.sleep(0.5)
     user_link = await utils.create_user_link(target_id, context)
     admin_link = await utils.create_user_link(admin.id, context)
     curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -263,10 +259,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("Let's give him another chance!")
     await asyncio.sleep(0.5)
 
-    if db.remove_gban(target_id):
-        try: await context.bot.unban_chat_member(chat.id, target_id, only_if_banned=True)
-        except: pass
-        
+    if db.remove_gban(target_id):       
         user_link = await utils.create_user_link(target_id, context)
         admin_link = await utils.create_user_link(admin.id, context)
         curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
