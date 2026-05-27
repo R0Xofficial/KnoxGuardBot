@@ -116,6 +116,13 @@ async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 # --- COMMANDS ---
 
+async def send_startup_log(context: ContextTypes.DEFAULT_TYPE):
+    if LOG_CHAT_ID:
+        try:
+            await context.bot.send_message(LOG_CHAT_ID, "Started")
+        except Exception as e:
+            logger.error(f"Failed to send startup log: {e}")
+
 @bot_command("help")
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Wyświetla listę dostępnych komend."""
@@ -136,9 +143,9 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_sudo:
         help_text += (
             "<b>Sudo Commands:</b>\n"
-            "• <code>/gban &lt;ID/reply&gt; &lt;reason&gt;</code> - Issue a global ban.\n"
-            "• <code>/ungban &lt;ID/reply&gt;</code> - Revoke a global ban.\n"
-            "• <code>/gbanstat &lt;ID/reply&gt;</code> - Check user's detailed ban info.\n"
+            "• <code>/gban &lt;target&gt; &lt;reason&gt;</code> - Issue a global ban.\n"
+            "• <code>/ungban &lt;target&gt;</code> - Revoke a global ban.\n"
+            "• <code>/gbanstat &lt;target&gt;</code> - Check user's detailed ban info.\n"
             "• <code>/stats</code> - View database statistics.\n"
             "• <code>/sudolist</code> - Show all bot administrators.\n"
             "• <code>/enforcegban &lt;on/off&gt;</code> - Toggle protection on current chat.\n\n"
@@ -148,8 +155,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if is_owner:
         help_text += (
             "<b>Master Owner Commands:</b>\n"
-            "• <code>/addsudo &lt;ID/reply&gt;</code> - Grant sudo privileges.\n"
-            "• <code>/delsudo &lt;ID/reply&gt;</code> - Revoke sudo privileges.\n"
+            "• <code>/addsudo &lt;target&gt;</code> - Grant sudo privileges.\n"
+            "• <code>/delsudo &lt;target&gt;</code> - Revoke sudo privileges.\n"
             "• <code>/cleanup</code> - Remove inactive chats from database.\n"
             "• <code>/backup</code> - Get the latest database file.\n\n"
         )
@@ -557,7 +564,13 @@ async def update_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.edit_text("<b>Bot is already up to date.</b>\nNo restart needed.", parse_mode=ParseMode.HTML)
             return
 
-        await msg.edit_text(f"<b>Update successful:</b>\n<i>Restarting now...</i>\n\n Log:<blockquote>{pull_result}</blockquote>\n", parse_mode=ParseMode.HTML)
+        successful_msg = (f"<b>Update successful:</b>\n<i>Restarting now...</i>\n\n Log:\n<blockquote>{pull_result}</blockquote>"")
+
+        await msg.edit_text(successful_msg, parse_mode=ParseMode.HTML)
+
+        if LOG_CHAT_ID:
+            admin_link = await utils.create_user_link(update.effective_user.id, context)
+            await context.bot.send_message(LOG_CHAT_ID, successful_msg, parse_mode=ParseMode.HTML)
 
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
