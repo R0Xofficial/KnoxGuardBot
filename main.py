@@ -238,7 +238,7 @@ def main():
 
     app.add_handler(CommandHandler("gban", gban_command))
     app.add_handler(CommandHandler("ungban", ungban_command))
-    app.add_handler(CommandHandler("gbanstat", gban_stat_command))
+    app.add_handler(CommandHandler("gbanstat", gbanstat_command))
     app.add_handler(CommandHandler("addsudo", addsudo_command))
     app.add_handler(CommandHandler("delsudo", delsudo_command))
     app.add_handler(CommandHandler("enforcegban", enforce_gban_command))
