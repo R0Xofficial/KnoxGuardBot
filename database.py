@@ -63,7 +63,7 @@ def remove_gban(user_id):
 def is_enforced(chat_id):
     with sqlite3.connect(DB_NAME) as conn:
         res = conn.execute("SELECT enforce_gban FROM bot_chats WHERE chat_id = ?", (chat_id,)).fetchone()
-        return res[0] == 1 if res else False
+        return res[0] == 1 if res else True
 
 def set_enforce(chat_id, status):
     with sqlite3.connect(DB_NAME) as conn:
