@@ -6,6 +6,7 @@ import io
 import os
 import sys
 import subprocess
+import sqlite3
 from datetime import datetime, timezone
 from telegram import Update
 from telegram.constants import ParseMode, ChatType, ChatMemberStatus
