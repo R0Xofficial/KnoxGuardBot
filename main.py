@@ -427,7 +427,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     msg = (f"<b>Bot Statistics:</b>\n\n"
            f"• <b>Global Bans:</b> <code>{gbans}</code>\n"
-           f"• <b>Cached Users:</b> <code>{users}</code>\n"
+           f"• <b>Known Users:</b> <code>{users}</code>\n"
            f"• <b>Total Chats:</b> <code>{chats}</code>")
     await update.message.reply_html(msg)
 
