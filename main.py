@@ -267,59 +267,74 @@ async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(msg)
 
 @bot_command("addsudo")
-async def addsudo_cmd(update, context):
-    admin = update.effective_user
-    if admin.id != OWNER_ID: return
+async def addsudo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Dodaje użytkownika do listy Sudo (Tylko Owner)."""
+    if update.effective_user.id != OWNER_ID: 
+        return
     
     target_id = None
     if update.message.reply_to_message:
         target_id = update.message.reply_to_message.from_user.id
     elif context.args:
         target_id, err = await utils.resolve_id(context, context.args[0])
-        if err: return await update.message.reply_text(err)
+        if err: 
+            await update.message.reply_text(err)
+            return
+            
+    if not target_id:
+        await update.message.reply_text("Who is the target of the command? The stars in the sky?")
+        return
 
-    if target_id:
-        db.add_sudo(target_id)
-        user_link = await utils.create_user_link(target_id, context)
-        admin_link = await utils.create_user_link(admin.id, context)
-        curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    db.add_sudo(target_id)
+    
+    user_link = await utils.create_user_link(target_id, context)
+    curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        log_msg = (f"<b>#SUDO_ADDED</b>\n"
-                   f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
-                   f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]\n"
-                   f"<b>Date:</b> <code>{curr_time}</code>")
+    log_msg = (f"<b>#SUDO_ADDED</b>\n"
+               f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
+               f"<b>Date:</b> <code>{curr_time}</code>")
 
-        await update.message.reply_html(log_msg)
-        if LOG_CHAT_ID:
-            await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
+    await update.message.reply_html(log_msg)
+    if LOG_CHAT_ID:
+        await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
+
 
 @bot_command("delsudo")
-async def delsudo_cmd(update, context):
-    admin = update.effective_user
-    if admin.id != OWNER_ID: return
+async def delsudo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID: 
+        return
     
     target_id = None
     if update.message.reply_to_message:
         target_id = update.message.reply_to_message.from_user.id
     elif context.args:
         target_id, err = await utils.resolve_id(context, context.args[0])
-        if err: return await update.message.reply_text(err)
+        if err: 
+            await update.message.reply_text(err)
+            return
+            
+    if not target_id:
+        await update.message.reply_text("Who is the target of the command? The stars in the sky?")
+        return
 
-    if target_id:
-        if target_id == OWNER_ID: return
-        db.remove_sudo(target_id)
+    if target_id == OWNER_ID:
+        await update.message.reply_text("LoL... You cannot remove yourself.")
+        return
+
+    if db.db_query("DELETE FROM sudo_users WHERE user_id = ?", (target_id,), commit=True).rowcount > 0:
         user_link = await utils.create_user_link(target_id, context)
-        admin_link = await utils.create_user_link(admin.id, context)
         curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
+        # Log bez pola Admin
         log_msg = (f"<b>#SUDO_REMOVED</b>\n"
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
-                   f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>")
 
         await update.message.reply_html(log_msg)
         if LOG_CHAT_ID:
             await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
+    else:
+        await update.message.reply_text("This user was not in the Sudo list.")
 
 @bot_command("enforceban")
 async def enforce_gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
