@@ -208,10 +208,10 @@ def main():
     # User Logger (Group 0 - zawsze loguje)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, log_user_handler), group=0)
     # Gban Checker (Group 1 - sprawdza po zlogowaniu)
-    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, check_gban_handler), group=-1)
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, check_gban_handler), group=1)
 
-    print("Gban Bot with UserCache Started...")
-    app.run_polling()
+    print("Started...")
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
