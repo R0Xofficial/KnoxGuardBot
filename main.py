@@ -147,7 +147,7 @@ async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     ban = db.get_gban(target_id)
     u_link = await utils.create_user_link(target_id, context)
-    title = "Your Global Ban Status" if target_id == user.id else "Global Ban Status"
+    title = "Your Global Ban Status:" if target_id == user.id else "Global Ban Status:"
     if ban:
         msg = (f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n"
                f"<b>Status:</b> Banned\n"
