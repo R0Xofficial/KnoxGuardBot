@@ -12,6 +12,13 @@ import utils
 
 logging.basicConfig(level=logging.INFO)
 
+# --- USER LOGGER (Zapisywanie osób do bazy) ---
+
+async def log_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if user and not user.is_bot:
+        db.log_user(user.id, user.username, user.first_name)
+
 # --- PROTECTION LOGIC ---
 
 async def check_gban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -40,12 +47,11 @@ async def check_gban_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 await context.bot.send_message(chat.id, msg, parse_mode=ParseMode.HTML)
             except: pass
 
-# --- INDIVIDUAL COMMAND FUNCTIONS ---
+# --- COMMANDS ---
 
 async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin = update.effective_user
     if not db.is_sudo(admin.id): return
-    
     target_id, reason = None, None
     if update.message.reply_to_message:
         target_id = update.message.reply_to_message.from_user.id
@@ -58,7 +64,7 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not target_id or not reason:
         await update.message.reply_text("Usage: /gban <ID/@user/reply> <reason>"); return
     if db.is_sudo(target_id) or target_id == context.bot.id:
-        await update.message.reply_text("LoL, looks like... Someone tried global ban privileged user. Nice Try."); return
+        await update.message.reply_text("LoL, looks like... Someone tried gban privileged user. Nice Try."); return
 
     old_ban = db.get_gban(target_id)
     await update.message.reply_html("Ok!")
@@ -68,7 +74,6 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_link = await utils.create_user_link(target_id, context)
     admin_link = await utils.create_user_link(admin.id, context)
     curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    
     hashtag = "#GBANUPDATE" if old_ban else "#GBANNED"
     
     log_msg = (f"<b>{hashtag}</b>\n"
@@ -96,33 +101,28 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_link = await utils.create_user_link(target_id, context)
         admin_link = await utils.create_user_link(admin.id, context)
         curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-        
         log_msg = (f"<b>#UNGBANNED</b>\n"
                    f"<b>Initiated From:</b> {utils.safe_escape(update.effective_chat.title)} [<code>{update.effective_chat.id}</code>]\n\n"
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>\n"
                    f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]")
-        
         await update.message.reply_html(log_msg)
         if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
     else:
         await update.message.reply_text("User is not globally banned.")
 
-async def gban_stat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     sudo = db.is_sudo(user.id)
     target_id = None
     if sudo:
         if update.message.reply_to_message: target_id = update.message.reply_to_message.from_user.id
         elif context.args: target_id, _ = await utils.resolve_id(context, context.args[0])
-    
     if not target_id: target_id = user.id
-    checking_self = (target_id == user.id)
-
+    
     ban = db.get_gban(target_id)
     u_link = await utils.create_user_link(target_id, context)
-    title = "Your Global Ban Status" if checking_self else "Global Ban Status"
-
+    title = "Your Global Ban Status" if target_id == user.id else "Global Ban Status"
     if ban:
         msg = (f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n"
                f"<b>Status:</b> ⚠️ <code>Globally Banned</code>\n\n"
@@ -130,57 +130,42 @@ async def gban_stat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if sudo:
             a_link = await utils.create_user_link(ban[1], context)
             msg += f"<b>Admin:</b> {a_link} [<code>{ban[1]}</code>]"
-        else:
-            msg += f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}"
-    else:
-        msg = f"<b>{title}</b>\n<b>User:</b> {u_link}\n<b>Status:</b> ✅ <code>Not Banned</code>"
-    
+        else: msg += f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}"
+    else: msg = f"<b>{title}</b>\n<b>User:</b> {u_link}\n<b>Status:</b> ✅ <code>Not Banned</code>"
     await update.message.reply_html(msg)
 
 async def addsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID: return
     target_id = None
-    if update.message.reply_to_message:
-        target_id = update.message.reply_to_message.from_user.id
-    elif context.args:
-        target_id, _ = await utils.resolve_id(context, context.args[0])
-    
+    if update.message.reply_to_message: target_id = update.message.reply_to_message.from_user.id
+    elif context.args: target_id, _ = await utils.resolve_id(context, context.args[0])
     if target_id:
         db.add_sudo(target_id)
-        await update.message.reply_text(f"✅ Added {target_id} to sudo list.")
+        await update.message.reply_text(f"✅ User {target_id} added to sudo list.")
 
 async def delsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID: return
     target_id = None
-    if update.message.reply_to_message:
-        target_id = update.message.reply_to_message.from_user.id
-    elif context.args:
-        target_id, _ = await utils.resolve_id(context, context.args[0])
-    
-    if target_id:
-        if target_id == OWNER_ID: return
+    if update.message.reply_to_message: target_id = update.message.reply_to_message.from_user.id
+    elif context.args: target_id, _ = await utils.resolve_id(context, context.args[0])
+    if target_id and target_id != OWNER_ID:
         db.remove_sudo(target_id)
-        await update.message.reply_text(f"❌ Removed {target_id} from sudo list.")
+        await update.message.reply_text(f"❌ User {target_id} removed from sudo list.")
 
 async def enforce_gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     if chat.type == ChatType.PRIVATE: return
     member = await chat.get_member(update.effective_user.id)
     if member.status != "creator" and not db.is_sudo(update.effective_user.id): return
+    if not context.args: return
     
-    if not context.args:
-        await update.message.reply_text("Usage: /enforcegban <yes/on/no/off>")
-        return
-
     choice = context.args[0].lower()
     if choice in ['yes', 'on']:
         db.set_enforce(chat.id, 1)
-        await update.message.reply_html("✅ <b>Global Ban enforcement is now ENABLED for this chat.</b>")
+        await update.message.reply_html("✅ <b>Global Ban enforcement is now ENABLED.</b>")
     elif choice in ['no', 'off']:
         db.set_enforce(chat.id, 0)
-        await update.message.reply_html("❌ <b>Global Ban enforcement is now DISABLED for this chat.</b>")
-    else:
-        await update.message.reply_text("Invalid choice. Use yes/on or no/off.")
+        await update.message.reply_html("❌ <b>Global Ban enforcement is now DISABLED.</b>")
 
 # --- MAIN ---
 
@@ -188,18 +173,19 @@ def main():
     db.init_db()
     app = Application.builder().token(TOKEN).build()
 
-    # Handlers registered individually
     app.add_handler(CommandHandler("gban", gban_command))
     app.add_handler(CommandHandler("ungban", ungban_command))
-    app.add_handler(CommandHandler("gbanstat", gban_stat_command))
+    app.add_handler(CommandHandler("gbanstat", gbanstat_command))
     app.add_handler(CommandHandler("addsudo", addsudo_command))
     app.add_handler(CommandHandler("delsudo", delsudo_command))
     app.add_handler(CommandHandler("enforcegban", enforce_gban_command))
 
-    # Background checking
+    # User Logger (Group 0 - zawsze loguje)
+    app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, log_user_handler), group=0)
+    # Gban Checker (Group 1 - sprawdza po zlogowaniu)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, check_gban_handler), group=1)
 
-    print("Bot is up and running...")
+    print("Gban Bot with UserCache Started...")
     app.run_polling()
 
 if __name__ == "__main__":
