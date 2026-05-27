@@ -254,6 +254,7 @@ def main():
     db.init_db()
     app = Application.builder().token(TOKEN).build()
 
+
     app.add_handler(CommandHandler("gban", gban_command))
     app.add_handler(CommandHandler("ungban", ungban_command))
     app.add_handler(CommandHandler("gbanstat", gbanstat_command))
@@ -261,14 +262,13 @@ def main():
     app.add_handler(CommandHandler("delsudo", delsudo_command))
     app.add_handler(CommandHandler("enforcegban", enforce_gban_command))
 
-    app.add_handler(ChatMemberHandler(check_gban_member_update, ChatMemberHandler.CHAT_MEMBER), group=-10)
-    
+    app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, check_gban_on_entry), group=-10)
+    app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, check_gban_on_exit), group=-10)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, check_gban_on_message), group=-10)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, log_user_handler), group=0)
 
     print("Bot is up and running...")
-    
-    app.run_polling(allowed_updates=[Update.MESSAGE, Update.CHAT_MEMBER, Update.CALLBACK_QUERY])
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
