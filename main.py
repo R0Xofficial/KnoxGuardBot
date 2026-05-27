@@ -3,6 +3,9 @@ import asyncio
 import time
 import traceback
 import io
+import os
+import sys
+import subprocess
 from datetime import datetime, timezone
 from telegram import Update
 from telegram.constants import ParseMode, ChatType, ChatMemberStatus
