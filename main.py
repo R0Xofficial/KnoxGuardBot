@@ -127,14 +127,15 @@ async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     u_link = await utils.create_user_link(target_id, context)
     title = "Your Global Ban Status" if target_id == user.id else "Global Ban Status"
     if ban:
-        msg = (f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n"
-               f"<b>Status:</b> ⚠️ <code>Globally Banned</code>\n\n"
+        msg = (f"<b>{title}</b>\n<b>User:</b> {u_link}\n"
+               f"<b>User ID</b>: <code>{target_id}</code>\n\n"
+               f"<b>Status:</b> Banned\n"
                f"<b>Reason:</b> <code>{utils.safe_escape(ban[0])}</code>\n<b>Date:</b> <code>{ban[2]}</code>\n")
         if sudo:
             a_link = await utils.create_user_link(ban[1], context)
             msg += f"<b>Admin:</b> {a_link} [<code>{ban[1]}</code>]"
         else: msg += f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}"
-    else: msg = f"<b>{title}</b>\n<b>User:</b> {u_link}\n<b>Status:</b> ✅ <code>Not Banned</code>"
+    else: msg = f"<b>{title}</b>\n<b>User:</b> {u_link}\n<b>User ID</b>: <code>{target_id}</code>\n\n<b>Status:</b> Not Banned"
     await update.message.reply_html(msg)
 
 async def addsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
