@@ -550,19 +550,7 @@ def main():
 
     app.add_error_handler(error_handler)
 
-    app.add_handler(MessageHandler(filters.Regex(r'^[!/]\w+'), command_router), group=1)
-    app.add_handler(CommandHandler("ping", ping_command))
-    app.add_handler(CommandHandler("uptime", uptime_command))
-    app.add_handler(CommandHandler("gban", gban_command))
-    app.add_handler(CommandHandler("ungban", ungban_command))
-    app.add_handler(CommandHandler("gbanstat", gbanstat_command))
-    app.add_handler(CommandHandler("addsudo", addsudo_command))
-    app.add_handler(CommandHandler("delsudo", delsudo_command))
-    app.add_handler(CommandHandler("enforcegban", enforce_gban_command))
-    app.add_handler(CommandHandler("databackup", backup_command))
-    app.add_handler(CommandHandler("cleanup", cleanup_cmd))
-    app.add_handler(CommandHandler(["sudolist", "sudos"], sudolist_cmd))
-    
+    app.add_handler(MessageHandler(filters.Regex(r'^[!/]\w+'), command_router), group=1)    
 
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, check_gban_on_entry), group=-10)
     app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, check_gban_on_exit), group=-10)
