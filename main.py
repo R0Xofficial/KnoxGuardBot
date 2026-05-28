@@ -234,6 +234,12 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         chat_display = utils.safe_escape(chat.title)
 
+    if db.is_enforced(chat.id):
+        try:
+            await context.bot.ban_chat_member(chat.id, target_id)
+        except Exception as e:
+            logger.warning(f"Could not locally ban {target_id}: {e}")
+
     db.add_gban(target_id, admin.id, reason)
     user_link = await utils.create_user_link(target_id, context)
     admin_link = await utils.create_user_link(admin.id, context)
