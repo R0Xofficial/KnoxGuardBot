@@ -57,10 +57,11 @@ async def check_gban_on_entry(update: Update, context: ContextTypes.DEFAULT_TYPE
                 user_link = await utils.create_user_link(member.id, context)
                 
                 msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
-                       f"<i>Enforcing ban in this chat.</i>\n\n"
+                       f"<i>Enforcing ban in this chat.</i>\n"
+                       f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n\n"
                        f"<b>User:</b> {user_link} [<code>{member.id}</code>]\n"
-                       f"<b>Reason:</b> {utils.safe_escape(ban_info[0])}\n"
-                       f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+                       f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n"
+                       )
                 
                 await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
             except Exception as e:
@@ -84,10 +85,10 @@ async def check_gban_on_exit(update: Update, context: ContextTypes.DEFAULT_TYPE)
             user_link = await utils.create_user_link(user.id, context)
             
             msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
-                   f"<i>Enforcing ban in this chat.</i>\n\n"
-                   f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
-                   f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n"
-                   f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+                    f"<i>Enforcing ban in this chat.</i>\n"
+                    f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n\n"
+                    f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
+                    f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n")
             
             await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
         except Exception as e:
@@ -112,10 +113,10 @@ async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TY
             user_link = await utils.create_user_link(user.id, context)
             
             msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
-                   f"<i>Enforcing ban in this chat.</i>\n\n"
-                   f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
-                   f"<b>Reason:</b> {utils.safe_escape(ban_info[0])}\n"
-                   f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}")
+                       f"<i>Enforcing ban in this chat.</i>\n"
+                       f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n\n"
+                       f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
+                       f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n")
             
             await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
         except Exception as e:
