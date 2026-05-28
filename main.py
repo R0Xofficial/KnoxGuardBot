@@ -268,6 +268,8 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         chat_display = utils.safe_escape(chat.title)
 
+    await utils.send_safe_reply(update, context, f"Ok!")
+
     if db.is_enforced(chat.id):
         try:
             await context.bot.ban_chat_member(chat.id, target_id)
@@ -287,11 +289,11 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if old_ban: log_msg += f"<b>Old Reason:</b> <code>{utils.safe_escape(old_ban[0])}</code>\n"
     log_msg += f"<b>Date:</b> <code>{curr_time}</code>\n<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]"
 
-    await utils.send_safe_reply(update, context, log_msg)
+    # await utils.send_safe_reply(update, context, log_msg)
     if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
 
     await asyncio.sleep(0.5)
-    await utils.send_safe_reply(update, context, "Done! Gbanned")
+    await utils.send_safe_reply(update, context, "Done! Gbanned.")
 
 @bot_command("ungban")
 async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -327,8 +329,9 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>\n"
                    f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]")
-        await utils.send_safe_reply(update, context, log_msg)
+        # await utils.send_safe_reply(update, context, log_msg)
         if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
+        await utils.send_safe_reply(update, context, f"User has been un-gbanned.")
         context.job_queue.run_once(propagate_unban, when=1, data={'user_id': target_id})
     else:
         await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
