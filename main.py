@@ -457,7 +457,7 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID: 
         return
 
-    status_msg = await update.message.reply_text("Starting database cleanup... Please wait.")
+    status_msg = await update.message.reply_text("🧹 Starting deep database cleanup... Checking bot status on each chat.")
     
     with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
@@ -465,23 +465,30 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = len(chats)
     removed = 0
     checked = 0
+    bot_id = context.bot.id
 
     for (chat_id,) in chats:
+        should_remove = False
         try:
-            await context.bot.get_chat(chat_id)
-            checked += 1
+            member = await context.bot.get_chat_member(chat_id, bot_id)
+            if member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.BANNED, ChatMemberStatus.KICKED]:
+                should_remove = True
         except Exception as e:
+            should_remove = True
+        
+        if should_remove:
             db.remove_chat(chat_id)
             removed += 1
-        
-        if checked % 10 == 0:
-            await asyncio.sleep(0.5)
+            logger.info(f"Cleanup: Removed inactive chat {chat_id}")
 
+        checked += 1
+        if checked % 5 == 0:
+            await asyncio.sleep(0.5)
     await status_msg.edit_text(
-        f"<b>Cleanup complete!</b>\n\n"
-        f"• Total chats in DB: <code>{total}</code>\n"
+        f"<b>Cleanup chats complete!</b>\n\n"
+        f"• Total scanned: <code>{total}</code>\n"
         f"• Removed: <code>{removed}</code>\n"
-        f"• Active: <code>{total - removed}</code>",
+        f"• Still active: <code>{total - removed}</code>",
         parse_mode=ParseMode.HTML
     )
 
