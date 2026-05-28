@@ -302,6 +302,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin = update.effective_user
     chat = update.effective_chat
     thread_id = update.effective_message.message_thread_id
+    is_private = update.effective_chat.type == ChatType.PRIVATE
     if not db.is_sudo(admin.id): return
     target_id = None
     if update.message.reply_to_message and not update.message.reply_to_message.forum_topic_created:
@@ -341,6 +342,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'chat_id': chat.id,
             'reply_to': update.message.message_id,
             'thread_id': thread_id
+            'is_private': is_private
         })
     else:
         await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
@@ -352,6 +354,7 @@ async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     target_chat_id = job_data['chat_id']
     command_msg_id = job_data['reply_to']
     thread_id = job_data.get('thread_id')
+    is_private = job_data.get('is_private', False)
     
     with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
@@ -385,10 +388,17 @@ async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     final_text = f"User has been un-gbanned.\nTime taken: <code>{duration}s</code>"
     
     try:
-        await context.bot.send_message(
-            chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML,
-            reply_to_message_id=command_msg_id
-        )
+        if is_private:
+            await context.bot.send_message(
+                chat_id=target_chat_id, 
+                text=final_text, 
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            await context.bot.send_message(
+                chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML,
+                reply_to_message_id=command_msg_id
+            )
     except:
         try:
             await context.bot.send_message(
