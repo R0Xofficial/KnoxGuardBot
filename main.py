@@ -228,6 +228,12 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("Ok!")
     await asyncio.sleep(0.5)
 
+    if chat.username:
+        chat_link = f"https://t.me/{chat.username}/{update.effective_message.message_id}"
+        chat_display = f"<a href='{chat_link}'>{utils.safe_escape(chat.title)}</a>"
+    else:
+        chat_display = utils.safe_escape(chat.title)
+
     db.add_gban(target_id, admin.id, reason)
     user_link = await utils.create_user_link(target_id, context)
     admin_link = await utils.create_user_link(admin.id, context)
@@ -235,7 +241,7 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hashtag = "#GBANUPDATE" if old_ban else "#GBANNED"
     
     log_msg = (f"<b>{hashtag}</b>\n"
-               f"<b>Initiated From:</b> {utils.safe_escape(chat.title)} [<code>{chat.id}</code>]\n\n"
+               f"<b>Initiated From:</b> {chat_display} [<code>{chat.id}</code>]\n\n"
                f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                f"<b>Reason:</b> <code>{utils.safe_escape(reason)}</code>\n")
     if old_ban: log_msg += f"<b>Old Reason:</b> <code>{utils.safe_escape(old_ban[0])}</code>\n"
@@ -261,12 +267,18 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("Let's give him another chance!")
     await asyncio.sleep(0.5)
 
+    if chat.username:
+        chat_link = f"https://t.me/{chat.username}/{update.effective_message.message_id}"
+        chat_display = f"<a href='{chat_link}'>{utils.safe_escape(chat.title)}</a>"
+    else:
+        chat_display = utils.safe_escape(chat.title)
+
     if db.remove_gban(target_id):       
         user_link = await utils.create_user_link(target_id, context)
         admin_link = await utils.create_user_link(admin.id, context)
         curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         log_msg = (f"<b>#UNGBANNED</b>\n"
-                   f"<b>Initiated From:</b> {utils.safe_escape(chat.title)} [<code>{chat.id}</code>]\n\n"
+                   f"<b>Initiated From:</b> {chat_display} [<code>{chat.id}</code>]\n\n"
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>\n"
                    f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]")
