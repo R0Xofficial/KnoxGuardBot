@@ -7,6 +7,8 @@ import os
 import sys
 import subprocess
 import sqlite3
+import telegram
+from telegram.error import Forbidden, BadRequest, RetryAfter, TimedOut
 from datetime import datetime, timezone
 from telegram import Update
 from telegram.constants import ParseMode, ChatType, ChatMemberStatus
@@ -334,56 +336,62 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.job_queue.run_once(propagate_unban, when=1, data={
             'user_id': target_id, 
             'chat_id': chat.id,
-            'reply_to': update.message.message_id
+            'reply_to': update.message.message_id,
+            'thread_id': update.message.message_thread_id if update.message.is_topic_message else None
         })
     else:
         await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
 
 async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
-    import time
     start_time = time.time()
-    
     job_data = context.job.data
-    user_id = job_data['user_id']
-    target_chat_id = job_data['chat_id']
-    command_msg_id = job_data['reply_to']
-    bot_id = context.bot.id
+    user_id, target_chat_id = job_data['user_id'], job_data['chat_id']
+    command_msg_id, thread_id = job_data['reply_to'], job_data.get('thread_id')
     
     with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
 
+    logger.info(f"Starting unban for {user_id} on {len(chats)} chats.")
+
     for (chat_id,) in chats:
         try:
-            bot_member = await context.bot.get_chat_member(chat_id, bot_id)
-            if bot_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.BANNED]:
-                db.remove_chat(chat_id)
-                continue
-            
-            user_member = await context.bot.get_chat_member(chat_id, user_id)
-            if user_member.status == ChatMemberStatus.BANNED:
-                await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
-            
-        except Exception:
+            await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
+                
+        except Forbidden:
             db.remove_chat(chat_id)
             
-        # await asyncio.sleep(0.3)
+        except BadRequest as e:
+            err = str(e).lower()
+            if any(x in err for x in ["chat not found", "bot was kicked", "not member"]):
+                db.remove_chat(chat_id)
+            elif "not enough rights" in err:
+                pass
+            
+        except RetryAfter as e:
+            logger.warning(f"FloodWait in {chat_id}: Sleeping for {e.retry_after}s")
+            await asyncio.sleep(e.retry_after)
+            
+        except (TimedOut, Exception) as e:
+            logger.warning(f"Unban bug in {chat_id}: {e}")
+            
+        await asyncio.sleep(0.05)
 
     duration = round(time.time() - start_time, 2)
     final_text = f"User has been un-gbanned.\nTime taken: <code>{duration}s</code>"
     
     try:
         await context.bot.send_message(
-            chat_id=target_chat_id, 
-            text=final_text, 
-            parse_mode=ParseMode.HTML,
+            chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML,
             reply_to_message_id=command_msg_id
         )
     except:
         try:
-            await context.bot.send_message(chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML)
-        except:
-            pass
-
+            await context.bot.send_message(
+                chat_id=target_chat_id, text=final_text, 
+                parse_mode=ParseMode.HTML, message_thread_id=thread_id
+            )
+        except: pass
+        
 @bot_command("gbanstat")
 async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
