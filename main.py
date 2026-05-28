@@ -331,38 +331,48 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]")
         # await utils.send_safe_reply(update, context, log_msg)
         if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
-        await utils.send_safe_reply(update, context, f"User has been un-gbanned.")
-        context.job_queue.run_once(propagate_unban, when=1, data={'user_id': target_id})
+        context.job_queue.run_once(propagate_unban, when=1, data={
+            'user_id': target_id, 
+            'chat_id': chat.id,
+        })
     else:
         await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
 
 async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
+    import time
+    start_time = time.time()
+    
     job_data = context.job.data
     user_id = job_data['user_id']
+    target_chat_id = job_data['chat_id']
     bot_id = context.bot.id
     
     with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
 
-    logger.info(f"Starting propagate unban for user {user_id} on {len(chats)} chats.")
-
     for (chat_id,) in chats:
         try:
-            member = await context.bot.get_chat_member(chat_id, bot_id)
-            
-            if member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.BANNED]:
+            bot_member = await context.bot.get_chat_member(chat_id, bot_id)
+            if bot_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.BANNED]:
                 db.remove_chat(chat_id)
-                logger.info(f"Auto-cleanup during ungban: Removed chat {chat_id}")
-            else:
+                continue
+            
+            user_member = await context.bot.get_chat_member(chat_id, user_id)
+            if user_member.status == ChatMemberStatus.BANNED:
                 await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
             
-        except Exception as e:
+        except Exception:
             db.remove_chat(chat_id)
-            logger.info(f"Auto-cleanup during ungban: Chat {chat_id} unreachable. Removed.")
             
         await asyncio.sleep(0.3)
 
-    logger.info(f"Background propagate unban for {user_id} finished!.")
+    duration = round(time.time() - start_time, 2)
+    final_text = f"User has been un-gbanned.\nTime taken: <code>{duration}s</code>"
+    
+    try:
+        await context.bot.send_message(chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML)
+    except:
+        pass
 
 @bot_command("gbanstat")
 async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
