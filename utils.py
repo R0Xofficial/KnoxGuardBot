@@ -37,3 +37,16 @@ async def resolve_id(update: Update, context, input_str: str):
         except: pass
 
     return None, "I can't find this user. Try replying to them or using their ID."
+
+async def send_safe_reply(update: Update, context, text: str, **kwargs):
+    try:
+        return await update.message.reply_html(text, **kwargs)
+    except telegram.error.BadRequest as e:
+        if "Message to be replied not found" in str(e):
+            return await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=text,
+                parse_mode='HTML',
+                **kwargs
+            )
+        raise e
