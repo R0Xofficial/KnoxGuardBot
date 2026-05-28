@@ -136,42 +136,48 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_sudo = db.is_sudo(user_id)
     is_owner = (user_id == OWNER_ID)
 
-    help_text = (
-        "<b>Bot Help</b>\n\n"
-        "<b>User Commands:</b>\n"
-        "• <code>/help</code> - Sends a message with available commands for you.\n"
-        "• <code>/ping</code> - Check bot latency.\n"
-        "• <code>/uptime</code> - See how long bot is running.\n"
-        "• <code>/enforcegban</code> &lt;on/off&gt; - Toggle protection on current chat (Owner only).\n"
-        "• <code>/gbanstat</code> - Check your own ban status.\n\n"
-    )
+    help_parts = [
+        "<b>Bot Help</b>\n",
+        "<b>User Commands:</b>",
+        "• <code>/help</code> - Sends this help message.",
+        "• <code>/ping</code> - Check bot latency.",
+        "• <code>/uptime</code> - See how long bot is running.",
+        "• <code>/enforcegban &lt;on/off&gt;</code> - Toggle protection on chat.",
+        "• <code>/gbanstat</code> - Check your own ban status.\n"
+    ]
 
     if is_sudo:
-        help_text += (
-            "<b>Sudo Commands:</b>\n"
-            "• <code>/gban</code> &lt;target&gt; &lt;reason&gt;</code> - Issue a global ban.\n"
-            "• <code>/ungban</code> &lt;target&gt; - Revoke a global ban.\n"
-            "• <code>/gbanstat</code> &lt;target&gt; - Check user's detailed ban info.\n"
-            "• <code>/stats</code> - View database statistics.\n"
-            "• <code>/sudolist</code> - Show all bot administrators.\n"
-            "• <code>/leave</code> - Bot leaving chat.\n"
-        )
+        help_parts.extend([
+            "<b>Sudo Commands:</b>",
+            "• <code>/gban &lt;target&gt; &lt;reason&gt;</code> - Issue a global ban.",
+            "• <code>/ungban &lt;target&gt;</code> - Revoke a global ban.",
+            "• <code>/gbanstat &lt;target&gt;</code> - Check user's detailed ban info.",
+            "• <code>/stats</code> - View database statistics.",
+            "• <code>/sudolist</code> - Show all bot administrators.",
+            "• <code>/leave</code> - Bot leaving current chat.\n"
+        ])
 
     if is_owner:
-        help_text += (
-            "<b>Master Owner Commands:</b>\n"
-            "• <code>/addsudo</code> &lt;target&gt; - Grant sudo privileges.\n"
-            "• <code>/delsudo</code> &lt;target&gt; - Revoke sudo privileges.\n"
-            "• <code>/cleanup</code> - Remove inactive chats from database.\n"
-            "• <code>/restart</code> - Restart bot.\n"
-            "• <code>/update</code> - Update bot to latest code.\n"
-            "• <code/restore</code> - Restore database from backup.\n"
-            "• <code>/backup</code> - Get the latest database file.\n\n"
-        )
+        help_parts.extend([
+            "<b>Master Owner Commands:</b>",
+            "• <code>/addsudo &lt;target&gt;</code> - Grant sudo privileges.",
+            "• <code>/delsudo &lt;target&gt;</code> - Revoke sudo privileges.",
+            "• <code>/cleanup</code> - Remove inactive chats from database.",
+            "• <code>/restart</code> - Restart bot process.",
+            "• <code>/update</code> - Update bot from Git.",
+            "• <code>/restore</code> - Restore database from file.",
+            "• <code>/databackup</code> - Get the latest database file.\n"
+        ])
 
-    help_text += "<i>You can use '/' or '!' as a prefix for all commands.</i>"
+    help_parts.append("<i>You can use '/' or '!' as a prefix for all commands.</i>")
 
-    await update.message.reply_html(help_text)
+    final_text = "\n".join(help_parts)
+    
+    try:
+        await update.message.reply_html(final_text)
+    except Exception as e:
+        logger.error(f"Help HTML Error: {e}")
+        await update.message.reply_text("Error: There is a formatting issue in the help message.")
 
 @bot_command("ping")
 async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
