@@ -658,7 +658,16 @@ async def restore_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     document = message.document or (message.reply_to_message.document if message.reply_to_message else None)
 
     if not document:
-        await message.reply_text("Send a <code>.db</code> file or reply to one with this command.", parse_mode=ParseMode.HTML)
+        await message.reply_text("Send the database file and reply it to me.")
+        return
+
+    required_filename = os.path.basename(DB_NAME)
+
+    if document.file_name != required_filename:
+        await message.reply_html(
+            f"<b>Wrong filename!</b>\n"
+            f"I only accepts: <code>{required_filename}</code>"
+        )
         return
 
     try:
@@ -666,13 +675,32 @@ async def restore_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await new_db_file.download_to_drive(DB_NAME)
         
-        await message.reply_text("Backup restored. Restarting system...")
+        await message.reply_text(f"Database restored. Restarting...")
+
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
     except Exception as e:
         logger.error(f"Restore failed: {e}")
         await message.reply_text(f"Error: <code>{str(e)}</code>", parse_mode=ParseMode.HTML)
-    
+
+async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
+    if OWNER_ID:
+        try:
+            db_filename = os.path.basename(DB_NAME)
+            curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            
+            with open(DB_NAME, 'rb') as db_file:
+                await context.bot.send_document(
+                    chat_id=OWNER_ID,
+                    document=db_file,
+                    filename=db_filename,
+                    caption=f"📦 <b>Scheduled Auto-Backup</b>\n<b>Date:</b> <code>{curr_time}</code>",
+                    parse_mode=ParseMode.HTML
+                )
+            logger.info("Automatic backup sent to owner.")
+        except Exception as e:
+            logger.error(f"Auto-backup failed: {e}")
+
 # --- main.py ---
 
 # --- MAIN ---
@@ -693,6 +721,8 @@ def main():
 
     if app.job_queue:
         app.job_queue.run_once(send_startup_log, when=1)
+
+    app.job_queue.run_repeating(auto_backup_job, interval=3600, first=3600)
 
     print("Bot is up and running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
