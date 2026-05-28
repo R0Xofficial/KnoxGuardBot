@@ -15,6 +15,13 @@ def init_db():
         conn.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY, username TEXT, first_name TEXT)')
         conn.commit()
 
+def db_query(query, params=(), commit=False):
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.execute(query, params)
+        if commit:
+            conn.commit()
+        return cursor
+
 def log_user(user_id, username, first_name):
     with sqlite3.connect(DB_NAME) as conn:
         conn.execute('INSERT OR REPLACE INTO users (user_id, username, first_name) VALUES (?, ?, ?)', 
