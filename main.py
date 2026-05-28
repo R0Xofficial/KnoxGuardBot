@@ -471,12 +471,13 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
            f"• <b>Total Chats:</b> <code>{chats}</code>")
     await update.message.reply_html(msg)
 
-@bot_command("databackup")
+@bot_command("backup")
 async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID: return
+    curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(DB_NAME, 'rb') as f:
-            await context.bot.send_document(OWNER_ID, document=f, caption=f"Database Backup: {datetime.now()}")
+            await context.bot.send_document(OWNER_ID, document=f, caption=f"Database Backup: {curr_time}")
         await update.message.reply_text("Backup sent to your PM.")
     except Exception as e:
         await update.message.reply_text(f"Error: {e}")
