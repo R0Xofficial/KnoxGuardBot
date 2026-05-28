@@ -35,11 +35,8 @@ async def chat_logger_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     chat = update.effective_chat
     
     if chat and chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
-        if db.log_chat(chat.id):
-            logger.info(f"New chat discovered and saved to DB: {chat.title} [{chat.id}]")
-            # if LOG_CHAT_ID:
-            #    await context.bot.send_message(LOG_CHAT_ID, f"<b>New Chat Discovered:</b>\n{utils.safe_escape(chat.title)} [<code>{chat.id}</code>]", parse_mode=ParseMode.HTML)
-
+        db.log_chat(chat.id)
+        
 # --- PROTECTION LOGIC ---
 
 async def check_gban_on_entry(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
