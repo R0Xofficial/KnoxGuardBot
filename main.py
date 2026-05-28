@@ -25,7 +25,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# --- LOGGERs ---
+# --- LOGGERS ---
 async def log_user_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if user and not user.is_bot:
@@ -35,13 +35,10 @@ async def chat_logger_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     chat = update.effective_chat
     
     if chat and chat.type in [ChatType.GROUP, ChatType.SUPERGROUP]:
-        if 'known_chats' not in context.bot_data:
-            context.bot_data['known_chats'] = set()
-
-        if chat.id not in context.bot_data['known_chats']:
-            db.log_chat(chat.id)
-            context.bot_data['known_chats'].add(chat.id)
-            logger.info(f"New chat discovered and logged: {chat.id}")
+        if db.log_chat(chat.id):
+            logger.info(f"New chat discovered and saved to DB: {chat.title} [{chat.id}]")
+            # if LOG_CHAT_ID:
+            #    await context.bot.send_message(LOG_CHAT_ID, f"📡 <b>New Chat Discovered:</b>\n{utils.safe_escape(chat.title)} [<code>{chat.id}</code>]", parse_mode=ParseMode.HTML)
 
 # --- PROTECTION LOGIC ---
 
