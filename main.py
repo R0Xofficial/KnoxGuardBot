@@ -124,6 +124,22 @@ async def check_gban_on_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 # --- COMMANDS ---
 
+async def ignore_edited_commands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info(f"Ignoring edited command: {update.edited_message.text}")
+    raise ApplicationHandlerStop
+
+async def ignore_old_updates(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_message:
+        return
+
+    message_date = update.effective_message.date
+    current_time = datetime.now(timezone.utc)
+
+    if (current_time - message_date).total_seconds() > 60:
+        logger.info(f"Skipped old update from chat {update.effective_chat.id} (Sent {int((current_time - message_date).total_seconds())}s ago)")
+        
+        raise ApplicationHandlerStop
+
 async def send_startup_log(context: ContextTypes.DEFAULT_TYPE):
     if LOG_CHAT_ID:
         try:
@@ -237,6 +253,12 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("LoL, looks like... Someone tried gban privileged user. Nice Try."); return
 
     old_ban = db.get_gban(target_id)
+    if old_ban:
+        old_reason = old_ban[0]
+        if old_reason.strip() == reason.strip():
+            user_link = await utils.create_user_link(target_id, context)
+            await utils.send_safe_reply(update, context, f"User {user_link} [<code>{target_id}</code>] is already globally banned for the same reason. <b>No changes made.</b>")
+            return
 
     if chat.type == ChatType.PRIVATE:
         chat_display = f"PM with {utils.safe_escape(admin.first_name)}"
@@ -731,6 +753,9 @@ async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
 def main():
     db.init_db()
     app = Application.builder().token(TOKEN).build()
+
+    app.add_handler(MessageHandler(filters.ALL, ignore_old_updates), group=-200)
+    app.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE & filters.COMMAND, ignore_edited_commands), group=-50)
 
     app.add_error_handler(error_handler)
 
