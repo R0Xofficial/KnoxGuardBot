@@ -175,7 +175,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     final_text = "\n".join(help_parts)
     
     try:
-        await update.message.reply_html(final_text)
+        await utils.send_safe_reply(update, context, final_text)
     except Exception as e:
         logger.error(f"Help HTML Error: {e}")
         await update.message.reply_text("Error: There is a formatting issue in the help message.")
@@ -210,7 +210,7 @@ async def uptime_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uptime_seconds = int((current_time - BOT_START_TIME).total_seconds())
     readable_uptime = await get_readable_time(uptime_seconds)
     
-    await update.message.reply_html(
+    await utils.send_safe_reply(update, context, 
         f"<b>Bot Uptime</b>\n"
         f"<b>Running for:</b> <code>{readable_uptime}</code>"
     )
@@ -265,11 +265,11 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if old_ban: log_msg += f"<b>Old Reason:</b> <code>{utils.safe_escape(old_ban[0])}</code>\n"
     log_msg += f"<b>Date:</b> <code>{curr_time}</code>\n<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]"
 
-    await update.message.reply_html(log_msg)
+    await utils.send_safe_reply(update, context, log_msg)
     if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
 
     await asyncio.sleep(0.5)
-    await update.message.reply_html("Done! Gbanned")
+    await utils.send_safe_reply(update, context, "Done! Gbanned")
 
 @bot_command("ungban")
 async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -285,7 +285,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not target_id:
         await update.message.reply_text("Who is the target of the command? The stars in the sky?"); return
 
-    await update.message.reply_html("Let's give him another chance!")
+    await utils.send_safe_reply(update, context, "Let's give him another chance!")
     await asyncio.sleep(0.5)
 
     if chat.type == ChatType.PRIVATE:
@@ -305,7 +305,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>\n"
                    f"<b>Admin:</b> {admin_link} [<code>{admin.id}</code>]")
-        await update.message.reply_html(log_msg)
+        await utils.send_safe_reply(update, context, log_msg)
         if LOG_CHAT_ID: await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
         context.job_queue.run_once(propagate_unban, when=1, data={'user_id': target_id})
     else:
@@ -362,7 +362,7 @@ async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg += f"<b>Admin:</b> {a_link} [<code>{ban[1]}</code>]"
         else: msg += f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}"
     else: msg = f"<b>{title}</b>\n<b>User:</b> {u_link} [<code>{target_id}</code>]\n\n<b>Status:</b> Not Banned"
-    await update.message.reply_html(msg)
+    await utils.send_safe_reply(update, context, msg)
 
 @bot_command("addsudo")
 async def addsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -387,7 +387,7 @@ async def addsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if db.is_sudo(target_id):
         user_link = await utils.create_user_link(target_id, context)
-        await update.message.reply_html(f"User {user_link} [<code>{target_id}</code>] is <b>already</b> sudo.")
+        await utils.send_safe_reply(update, context, f"User {user_link} [<code>{target_id}</code>] is <b>already</b> sudo.")
         return
 
     db.add_sudo(target_id)
@@ -398,7 +398,7 @@ async def addsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                 f"<b>Date:</b> <code>{curr_time}</code>")
 
-    await update.message.reply_html(log_msg)
+    await utils.send_safe_reply(update, context, log_msg)
     if LOG_CHAT_ID:
         await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
 
@@ -432,7 +432,7 @@ async def delsudo_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                    f"<b>User:</b> {user_link} [<code>{target_id}</code>]\n"
                    f"<b>Date:</b> <code>{curr_time}</code>")
 
-        await update.message.reply_html(log_msg)
+        await utils.send_safe_reply(update, context, log_msg)
         if LOG_CHAT_ID:
             await context.bot.send_message(LOG_CHAT_ID, log_msg, parse_mode=ParseMode.HTML)
     else:
@@ -453,7 +453,7 @@ async def enforce_gban_command(update: Update, context: ContextTypes.DEFAULT_TYP
     status_text = "ENABLED" if current_status else "DISABLED"
 
     if not context.args:
-        await update.message.reply_html(
+        await utils.send_safe_reply(update, context, 
             f"<b>Global Ban Enforcement</b>\n\n"
             f"Current status for this chat: <b>{status_text}</b>\n"
             f"<b>Usage:</b> <code>/enforcegban &lt;yes/on/no/off&gt;</code>"
@@ -463,12 +463,12 @@ async def enforce_gban_command(update: Update, context: ContextTypes.DEFAULT_TYP
     choice = context.args[0].lower()
     if choice in ['yes', 'on']:
         db.set_enforce(chat.id, 1)
-        await update.message.reply_html("<b>Global Ban enforcement has been ENABLED.</b>")
+        await utils.send_safe_reply(update, context, "<b>Global Ban enforcement has been ENABLED.</b>")
     elif choice in ['no', 'off']:
         db.set_enforce(chat.id, 0)
-        await update.message.reply_html("<b>Global Ban enforcement has been DISABLED.</b>\n<i>Warning: Gbanned users will no longer be removed automatically.</i>")
+        await utils.send_safe_reply(update, context, "<b>Global Ban enforcement has been DISABLED.</b>\n<i>Warning: Gbanned users will no longer be removed automatically.</i>")
     else:
-        await update.message.reply_html(
+        await utils.send_safe_reply(update, context, 
             f"<b>Invalid choice!</b>\n\n"
             f"Use: <code>/enforcegban on</code> or <code>/enforcegban off</code>"
         )
@@ -486,7 +486,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
            f"• <b>Global Bans:</b> <code>{gbans}</code>\n"
            f"• <b>Known Users:</b> <code>{users}</code>\n"
            f"• <b>Total Chats:</b> <code>{chats}</code>")
-    await update.message.reply_html(msg)
+    await utils.send_safe_reply(update, context, msg)
 
 @bot_command("backup")
 async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -603,7 +603,7 @@ async def sudolist_cmd(update, context):
         u_link = await utils.create_user_link(s_id, context)
         msg += f"• {u_link} [<code>{s_id}</code>]\n"
     
-    await update.message.reply_html(msg)
+    await utils.send_safe_reply(update, context, msg)
 
 @bot_command("update")
 async def update_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -639,7 +639,7 @@ async def restart_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
         return
     try:
-        await update.message.reply_html("Restarting...")
+        await utils.send_safe_reply(update, context, "Restarting...")
         if LOG_CHAT_ID:
             await context.bot.send_message(LOG_CHAT_ID, "Rebooting system...")
     except Exception as e:
@@ -688,7 +688,7 @@ async def restore_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
         
-    status_msg = await update.message.reply_html("Downloading database...")
+    status_msg = await utils.send_safe_reply(update, context, "Downloading database...")
 
     try:
         new_db_file = await context.bot.get_file(document.file_id)
