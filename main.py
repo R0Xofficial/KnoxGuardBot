@@ -240,7 +240,7 @@ async def gban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(0.5)
 
     if chat.type == ChatType.PRIVATE:
-        chat_display = f"PM with {utils.safe_escape(admin.first_name)} [<code>{admin.id}</code>]"
+        chat_display = f"PM with {utils.safe_escape(admin.first_name)}"
     elif chat.username:
         chat_link = f"https://t.me/{chat.username}/{update.effective_message.message_id}"
         chat_display = f"<a href='{chat_link}'>{utils.safe_escape(chat.title)}</a>"
