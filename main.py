@@ -291,16 +291,30 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     job_data = context.job.data
     user_id = job_data['user_id']
+    bot_id = context.bot.id
     
     with sqlite3.connect(DB_NAME) as conn:
         chats = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
 
+    logger.info(f"Starting propagate unban for user {user_id} on {len(chats)} chats.")
+
     for (chat_id,) in chats:
         try:
-            await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
-            await asyncio.sleep(0.1) 
-        except Exception:
-            continue
+            member = await context.bot.get_chat_member(chat_id, bot_id)
+            
+            if member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.BANNED]:
+                db.remove_chat(chat_id)
+                logger.info(f"Auto-cleanup during ungban: Removed chat {chat_id}")
+            else:
+                await context.bot.unban_chat_member(chat_id, user_id, only_if_banned=True)
+            
+        except Exception as e:
+            db.remove_chat(chat_id)
+            logger.info(f"Auto-cleanup during ungban: Chat {chat_id} unreachable. Removed.")
+            
+        await asyncio.sleep(0.3)
+
+    logger.info(f"Background propagate unban for {user_id} finished!.")
 
 @bot_command("gbanstat")
 async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -607,6 +621,27 @@ async def restart_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Failed to send restart message: {e}")
     os.execv(sys.executable, [sys.executable] + sys.argv)
+
+@bot_command("leave")
+async def leave_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not db.is_sudo(update.effective_user.id):
+        return
+
+    if update.effective_chat.type == ChatType.PRIVATE:
+        await update.message.reply_text("I can only leave groups.")
+        return
+
+    chat_id = update.effective_chat.id
+
+    try:
+        await update.message.reply_text("Farewell! My duties here are finished. 🫡")
+        
+        db.remove_chat(chat_id)
+        await context.bot.leave_chat(chat_id)
+        
+        logger.info(f"Bot left chat {chat_id} via leave command.")
+    except Exception as e:
+        logger.error(f"Error while leaving chat {chat_id}: {e}")
     
 # --- main.py ---
 
