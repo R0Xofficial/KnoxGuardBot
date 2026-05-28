@@ -14,26 +14,25 @@ async def create_user_link(user_id: int, context) -> str:
     except:
         return f'Unknown User'
 
-async def resolve_id(context, input_str: str):
+async def resolve_id(update: Update, context, input_str: str):
     input_str = input_str.strip()
-    
-    # 1. Sprawdź czy to ID (cyfry)
+
+    if update.message and update.message.entities:
+        for entity in update.message.entities:
+            if entity.type == 'text_mention' and entity.user:
+                return entity.user.id, None
+
     if input_str.isdigit() or (input_str.startswith("-") and input_str[1:].isdigit()):
         uid = int(input_str)
-        if uid < 0: return None, "🧐 Channels/Chats cannot be globally banned."
+        if uid < 0: return None, "🧐 Channels cannot be globally banned."
         return uid, None
     
-    # 2. Sprawdź w lokalnej bazie danych (po username)
     if input_str.startswith("@"):
         db_id = db.get_user_by_username(input_str)
         if db_id: return db_id, None
-        
-        # 3. Jeśli nie ma w bazie, spróbuj API (rzadko działa dla obcych)
         try:
             res = await context.bot.get_chat(input_str)
-            if res.type == ChatType.PRIVATE:
-                return res.id, None
-        except:
-            pass
+            if res.type == ChatType.PRIVATE: return res.id, None
+        except: pass
 
-    return None, "I can't find this user. They must send a message in a group where I am present first."
+    return None, "I can't find this user. Try replying to them or using their ID."
