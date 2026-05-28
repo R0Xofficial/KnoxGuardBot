@@ -334,6 +334,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.job_queue.run_once(propagate_unban, when=1, data={
             'user_id': target_id, 
             'chat_id': chat.id,
+            'reply_to': update.message.message_id
         })
     else:
         await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
@@ -345,6 +346,7 @@ async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     job_data = context.job.data
     user_id = job_data['user_id']
     target_chat_id = job_data['chat_id']
+    command_msg_id = job_data['reply_to']
     bot_id = context.bot.id
     
     with sqlite3.connect(DB_NAME) as conn:
@@ -370,9 +372,17 @@ async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     final_text = f"User has been un-gbanned.\nTime taken: <code>{duration}s</code>"
     
     try:
-        await context.bot.send_message(chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML)
+        await context.bot.send_message(
+            chat_id=target_chat_id, 
+            text=final_text, 
+            parse_mode=ParseMode.HTML,
+            reply_to_message_id=command_msg_id
+        )
     except:
-        pass
+        try:
+            await context.bot.send_message(chat_id=target_chat_id, text=final_text, parse_mode=ParseMode.HTML)
+        except:
+            pass
 
 @bot_command("gbanstat")
 async def gbanstat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
