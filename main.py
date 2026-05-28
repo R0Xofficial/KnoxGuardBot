@@ -341,7 +341,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'user_id': target_id,
             'chat_id': chat.id,
             'reply_to': update.message.message_id,
-            'thread_id': thread_id
+            'thread_id': thread_id,
             'is_private': is_private
         })
     else:
