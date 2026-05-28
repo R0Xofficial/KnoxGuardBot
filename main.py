@@ -658,7 +658,7 @@ async def restore_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     document = message.document or (message.reply_to_message.document if message.reply_to_message else None)
 
     if not document:
-        await message.reply_text("Send the database file and reply it to me.")
+        await message.reply_text("Send the database file or reply to one.")
         return
 
     required_filename = os.path.basename(DB_NAME)
@@ -669,19 +669,24 @@ async def restore_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"I only accepts: <code>{required_filename}</code>"
         )
         return
+        
+    status_msg = await update.message.reply_html("Downloading database...")
 
     try:
         new_db_file = await context.bot.get_file(document.file_id)
         
         await new_db_file.download_to_drive(DB_NAME)
         
-        await message.reply_text(f"Database restored. Restarting...")
+        await status_msg.edit_text(
+            f"<b>Database restored!</b>\nRestarting system now...", 
+            parse_mode=ParseMode.HTML
+        )
 
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
     except Exception as e:
         logger.error(f"Restore failed: {e}")
-        await message.reply_text(f"Error: <code>{str(e)}</code>", parse_mode=ParseMode.HTML)
+        await status_msg.edit_text(f"<b>Error during restore:</b>\n<code>{str(e)}</code>", parse_mode=ParseMode.HTML)
 
 async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
     if OWNER_ID:
@@ -722,7 +727,7 @@ def main():
     if app.job_queue:
         app.job_queue.run_once(send_startup_log, when=1)
 
-    app.job_queue.run_repeating(auto_backup_job, interval=3600, first=3600)
+    app.job_queue.run_repeating(auto_backup_job, interval=30, first=30)
 
     print("Bot is up and running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
