@@ -82,6 +82,11 @@ def remove_chat(chat_id):
         conn.execute("DELETE FROM bot_chats WHERE chat_id = ?", (chat_id,))
         conn.commit()
 
+def get_all_chats():
+    with sqlite3.connect(DB_NAME) as conn:
+        res = conn.execute("SELECT chat_id FROM bot_chats").fetchall()
+        return {row[0] for row in res}
+
 def get_all_sudos():
     with sqlite3.connect(DB_NAME) as conn:
         res = conn.execute("SELECT user_id FROM sudo_users").fetchall()
