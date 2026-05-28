@@ -1,6 +1,7 @@
 # --- utils.py ---
 import html
 import database as db
+from telegram import Update
 from telegram.constants import ChatType
 
 def safe_escape(text: str) -> str:
