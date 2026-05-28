@@ -84,15 +84,15 @@ async def check_gban_on_exit(update: Update, context: ContextTypes.DEFAULT_TYPE)
         try:
             await context.bot.ban_chat_member(chat.id, user.id)
             
-            user_link = await utils.create_user_link(user.id, context)
+            # user_link = await utils.create_user_link(user.id, context)
             
-            msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
-                    f"<i>I banned him here!</i>\n"
-                    f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n"
-                    f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
-                    f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n")
+            # msg = (f"⚠️ <b>Alert!</b> This user is globally banned.\n"
+                    # f"<i>I banned him here!</i>\n"
+                    # f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n"
+                    # f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
+                    # f"<b>Reason:</b> <code>{utils.safe_escape(ban_info[0])}</code>\n")
             
-            await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
+            # await context.bot.send_message(chat.id, text=msg, parse_mode=ParseMode.HTML)
         except Exception as e:
             logger.error(f"Gban Exit Error: {e}")
 
