@@ -338,6 +338,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await utils.send_safe_reply(update, context, "Let's give him another chance!")
     await asyncio.sleep(0.5)
+    user_link = await utils.create_user_link(target_id, context)
 
     if chat.type == ChatType.PRIVATE:
         chat_display = f"PM with {utils.safe_escape(admin.first_name)}"
@@ -348,7 +349,6 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_display = utils.safe_escape(chat.title)
 
     if db.remove_gban(target_id):       
-        user_link = await utils.create_user_link(target_id, context)
         admin_link = await utils.create_user_link(admin.id, context)
         curr_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         log_msg = (f"<b>#UNGBANNED</b>\n"
