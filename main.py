@@ -636,6 +636,17 @@ async def cleanup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    ERRORS_TO_IGNORE = [
+        "httpx.ConnectError: All connection attempts failed"
+    ]
+
+    error_str = str(context.error)
+
+    if any(ignored in error_str for ignored in ERRORS_TO_IGNORE):
+        # We ignore it silently (or log only to console)
+        # logger.info(f"Ignored traceback: {error_str}")
+        return
+    
     logger.error("Exception while handling an update:", exc_info=context.error)
 
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
@@ -654,20 +665,20 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
     summary_message = (
         f"<b>Bot Error Detected!</b>\n\n"
-        f"<b>Error:</b> <code>{utils.safe_escape(str(context.error))}</code>\n"
+        f"<b>Error:</b> <code>{utils.safe_escape(error_str)}</code>\n"
         f"<b>Chat:</b> {chat_info}\n"
         f"<b>User:</b> {user_info}\n\n"
         f"<i>Full traceback is attached as a file.</i>"
     )
 
-    if OWNER_ID:
+    if LOG_CHAT_ID:
         try:
             with io.BytesIO(str.encode(tb_string)) as traceback_file:
                 filename = f"traceback_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
                 traceback_file.name = filename
                 
                 await context.bot.send_document(
-                    chat_id=OWNER_ID,
+                    chat_id=LOG_CHAT_ID,
                     document=traceback_file,
                     caption=summary_message,
                     parse_mode=ParseMode.HTML
@@ -676,7 +687,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             logger.critical(f"Could not send traceback file: {e}")
             try:
                 await context.bot.send_message(
-                    OWNER_ID, 
+                    LOG_CHAT_ID, 
                     f"<b>Critical Error:</b> Failed to send traceback file.\nError: {e}"
                 )
             except:
