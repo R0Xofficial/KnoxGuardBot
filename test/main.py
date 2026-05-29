@@ -827,7 +827,6 @@ def main():
 
     app.add_handler(MessageHandler(filters.Regex(r'^[!/]\w+'), command_router), group=1)    
 
-    app.add_handler(MessageHandler(filters.ALL, chat_logger_handler), group=-15)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, enforcer_message_checker), group=-100)
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, passive_data_logger), group=10)
 
