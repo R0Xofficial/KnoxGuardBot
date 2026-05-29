@@ -207,7 +207,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "• <code>/restart</code> - Restart bot process.",
             "• <code>/update</code> - Update bot from Git.",
             "• <code>/restore</code> - Restore database from file.",
-            "• <code>/databackup</code> - Get the latest database file.\n"
+            "• <code>/backup</code> - Get the latest database file.\n"
         ])
 
     help_parts.append("<i>You can use '/' or '!' as a prefix for all commands.</i>")
