@@ -57,7 +57,7 @@ async def gban_enforcer_action(user, chat, update: Update, context: ContextTypes
             # 2. Send alert message only if requested (usually on Join or Message)
             if send_alert:
                 user_link = await utils.create_user_link(user.id, context)
-                msg = (f"⚠️ <b>Alert!</b> I found a user who is globally banned.\n"
+                msg = (f"<b>Alert!</b> I found a user who is globally banned.\n"
                        f"<i>I banned him here!</i>"
                        f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n"
                        f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
@@ -103,7 +103,7 @@ async def enforcer_radar(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.ban_chat_member(chat.id, user.id)
             if is_joining:
                 user_link = await utils.create_user_link(user.id, context)
-                msg = (f"⚠️ <b>Alert!</b> I found a user who is globally banned.\n"
+                msg = (f"<b>Alert!</b> I found a user who is globally banned.\n"
                        f"<i>I banned him here!</i>"
                        f"<b>Appeal Chat:</b> {APPEAL_CHAT_USERNAME}\n"
                        f"<b>User:</b> {user_link} [<code>{user.id}</code>]\n"
