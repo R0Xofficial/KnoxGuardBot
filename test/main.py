@@ -366,7 +366,7 @@ async def ungban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'is_private': is_private
         })
     else:
-        await update.message.reply_text(f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
+        await utils.send_safe_reply(update, context, f"User {user_link} [<code>{target_id}</code>] is not globally banned.")
 
 async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     """Astrako Style: High-speed unban using chat mapping."""   
