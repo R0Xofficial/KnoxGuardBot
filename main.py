@@ -377,7 +377,7 @@ async def propagate_unban(context: ContextTypes.DEFAULT_TYPE):
     thread_id = job_data.get('thread_id')
     is_private = job_data.get('is_private', False)
 
-    # 1. FETCH ONLY RELATED CHATS (Federation Mapping)
+    # 1. FETCH ONLY RELATED CHATS
     # Instead of all chats, we only target where the user was seen.
     chats = db.get_user_seen_chats(user_id)
     
