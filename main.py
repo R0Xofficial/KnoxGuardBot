@@ -106,7 +106,6 @@ async def enforcer_radar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ban_info = db.get_gban(user.id)
     if ban_info:
         try:
-            await context.bot.ban_chat_member(chat.id, user.id)
             if is_joining or is_leaving:
                 await gban_enforcer_action(user, chat, update, context, send_alert=True)
             
