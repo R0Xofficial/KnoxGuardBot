@@ -187,7 +187,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_parts.extend([
             "<b>Sudo Commands:</b>",
             "• <code>/gban &lt;target&gt; &lt;reason&gt;</code> - Issue a global ban.",
-            "• <code>/ungban &lt;target&gt;</code> - Revoke a global ban.",
+            "• <code>/ungban &lt;target&gt; &lt;reason&gt;</code> - Revoke a global ban.",
             "• <code>/gbanstat &lt;target&gt;</code> - Check user's detailed ban info.",
             "• <code>/stats</code> - View database statistics.",
             "• <code>/sudolist</code> - Show all bot administrators.",
