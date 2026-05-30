@@ -6,7 +6,7 @@ import io
 import os
 import sys
 import subprocess
-import aiosqlite
+import sqlite3
 import telegram
 from telegram.error import Forbidden, BadRequest, RetryAfter, TimedOut
 from datetime import datetime, timezone
